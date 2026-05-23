@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚖️ LegalRAG — AI Legal Research Assistant</title>
+    <meta name="description" content="Premium AI-powered legal research assistant with citation cross-referencing and intelligent document analysis.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
+</head>
+<body>
+
+    <!-- ═══════════════════════════════════════
+         LEFT SIDEBAR
+         ═══════════════════════════════════════ -->
+    <aside class="sidebar">
+        <div class="sidebar-inner">
+
+            <!-- Logo -->
+            <div class="logo-container">
+                <div class="logo-icon">⚖️</div>
+                <div>
+                    <div class="logo-text">LegalRAG</div>
+                    <div class="logo-sub">Research Assistant</div>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div class="sidebar-section">
+                <span class="sidebar-title"><span class="title-icon">🕐</span> Query History</span>
+                <div class="history-search">
+                    <span class="history-search-icon">🔍</span>
+                    <input type="text" id="historySearchInput" placeholder="Search past queries…">
+                </div>
+                <div class="history-list" id="historyList">
+                    <div class="history-empty" id="historyEmpty">No queries yet</div>
+                </div>
+            </div>
+
+            <!-- Context -->
+            <div class="sidebar-section">
+                <span class="sidebar-title"><span class="title-icon">📁</span> Database</span>
+                <div class="form-group">
+                    <label for="kbSelect">Knowledge Base</label>
+                    <select id="kbSelect">
+                        <option value="global">Global Database</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-top: 0.15rem;">
+                    <label>Scope</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="search_scope" value="global" checked>
+                            <span>🌐 Global</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="search_scope" value="custom">
+                            <span>📂 Custom KB</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="search_scope" value="combined">
+                            <span>🔄 Combined</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="sidebar-section">
+                <span class="sidebar-title"><span class="title-icon">⚙️</span> Filters</span>
+                <div class="form-group">
+                    <label for="actFilter">Act Filter</label>
+                    <select id="actFilter">
+                        <option value="All Acts">All Acts</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Toggles -->
+            <div class="sidebar-section">
+                <span class="sidebar-title"><span class="title-icon">🔧</span> Model</span>
+                <div class="toggle-group">
+                    <div class="toggle-item">
+                        <label for="toggleReranker">Reranking</label>
+                        <label class="switch">
+                            <input type="checkbox" id="toggleReranker" checked>
+                            <span class="slider-switch"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-item">
+                        <label for="toggleRewrite">Query Rewrite</label>
+                        <label class="switch">
+                            <input type="checkbox" id="toggleRewrite" checked>
+                            <span class="slider-switch"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <span class="footer-text">⚙️ Settings auto-synced</span>
+                <span class="footer-text">Powered by Ollama & ChromaDB</span>
+            </div>
+
+        </div>
+    </aside>
+
+    <!-- ═══════════════════════════════════════
+         CENTER — AI RESEARCH
+         ═══════════════════════════════════════ -->
+    <main class="center-panel">
+        <header class="panel-header">
+            <h1>Legal <span class="gold-accent">Research</span> Assistant</h1>
+            <p>AI-Powered Legal Document Q&A with RAG Retrieval</p>
+        </header>
+
+        <div class="tabs-container">
+            <button class="tab-btn active" data-tab="assistantTab" id="tabAssistant">⚖️ Assistant</button>
+            <button class="tab-btn" data-tab="kbTab" id="tabKb">📂 Knowledge Bases</button>
+        </div>
+
+        <div class="center-scroll">
+
+            <!-- TAB 1 -->
+            <section id="assistantTab" class="tab-content active">
+                <div class="glass-card">
+                    <div class="card-title">
+                        <span class="icon">🔍</span> Ask a Legal Question
+                    </div>
+                    <div class="search-container">
+                        <div class="search-input-wrapper">
+                            <span class="search-icon-inside">⚖️</span>
+                            <input type="text" id="queryInput" placeholder="e.g. What is Section 43A of the IT Act?" value="What is Section 43A of the IT Act?">
+                        </div>
+                        <button class="btn-primary" id="btnSearch">
+                            <span>🔍</span> Search
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loader -->
+                <div class="loader-wrapper" id="loaderWrapper">
+                    <div class="spinner"></div>
+                    <div class="progress-text">Searching legal documents…</div>
+                </div>
+
+                <!-- Response -->
+                <div class="glass-card response-container" id="responseContainer">
+                    <div class="response-header">
+                        <span class="response-title">💬 AI Response</span>
+                        <button class="btn-copy" id="btnCopy">📋 Copy</button>
+                    </div>
+                    <div class="answer-box" id="answerBox"></div>
+                    <div class="rewritten-query-box" id="rewrittenQueryBox"></div>
+                    <div>
+                        <h3 class="citations-section-title">
+                            <span>📜</span> Citations & Sources
+                        </h3>
+                        <p style="font-size: 0.7rem; color: var(--text-light); margin-bottom: 0.5rem;">Click a citation to view its full source →</p>
+                        <div class="citations-grid" id="citationsGrid"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2 -->
+            <section id="kbTab" class="tab-content">
+                <div class="glass-card" style="text-align: center; padding: 2.5rem;">
+                    <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;">Manage your knowledge bases in a focused overlay</p>
+                    <button class="btn-primary" id="btnOpenKbModal" style="margin: 0 auto;">
+                        <span>📂</span> Open Manager
+                    </button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════
+         RIGHT — SOURCE VIEWER
+         ═══════════════════════════════════════ -->
+    <aside class="source-panel">
+        <div class="source-header">
+            <div class="source-header-title">
+                <span class="dot" id="sourceDot"></span>
+                Source Viewer
+            </div>
+            <div class="source-meta" id="sourceMeta">
+                <div class="source-meta-row">
+                    <span class="source-meta-label">Act</span>
+                    <span class="source-meta-value" id="sourceActName">—</span>
+                </div>
+                <div class="source-meta-row">
+                    <span class="source-meta-label">Section</span>
+                    <span class="source-meta-value" id="sourceSection">—</span>
+                </div>
+                <div class="source-meta-row">
+                    <span class="source-meta-label">Chapter</span>
+                    <span class="source-meta-value" id="sourceChapter">—</span>
+                </div>
+                <div class="source-meta-row">
+                    <span class="source-meta-label">Page</span>
+                    <span class="source-meta-value" id="sourcePage">—</span>
+                </div>
+                <div class="source-meta-row" style="margin-top: 0.2rem;">
+                    <span class="source-badge" id="sourceRelevance">—</span>
+                </div>
+            </div>
+        </div>
+        <div class="source-content">
+            <div class="source-empty" id="sourceEmpty">
+                <div class="source-empty-icon">📄</div>
+                <div class="source-empty-text">Click a citation to view source text here</div>
+                <div class="source-empty-hint">💡 Citations appear after querying</div>
+            </div>
+            <div class="source-loaded" id="sourceLoaded">
+                <div class="source-text" id="sourceText"></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ═══════════════════════════════════════
+         KB MODAL
+         ═══════════════════════════════════════ -->
+    <div class="modal-overlay" id="kbModalOverlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-title"><span>📂</span> Knowledge Base Manager</div>
+                <button class="modal-close" id="btnCloseKbModal">✕</button>
+            </div>
+            <div class="kb-grid" id="kbGrid"></div>
+            <div class="upload-row">
+                <div class="glass-card">
+                    <div class="card-title"><span class="icon">🆕</span> Create KB</div>
+                    <div class="form-group" style="margin-bottom: 0.65rem;">
+                        <label for="newKbIdInput">KB ID (lowercase)</label>
+                        <input type="text" id="newKbIdInput" placeholder="e.g. client_alpha">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="newKbNameInput">Friendly Name</label>
+                        <input type="text" id="newKbNameInput" placeholder="e.g. Client Alpha Files">
+                    </div>
+                    <button class="btn-primary" id="btnCreateKb" style="width: 100%; justify-content: center; height: 42px;">
+                        <span>➕</span> Create
+                    </button>
+                </div>
+                <div class="glass-card">
+                    <div class="card-title"><span class="icon">📥</span> Upload Documents</div>
+                    <div class="form-group" style="margin-bottom: 0.65rem;">
+                        <label for="uploadKbSelect">Target KB</label>
+                        <select id="uploadKbSelect">
+                            <option value="global">Global Database</option>
+                        </select>
+                    </div>
+                    <div class="drag-drop-zone" id="dragDropZone" style="margin-bottom: 0.65rem;">
+                        <span class="drag-drop-icon">📥</span>
+                        <span id="dragDropText" style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">
+                            Drop PDF/DOCX/TXT or click
+                        </span>
+                        <input type="file" id="fileInput" class="file-input" accept=".pdf,.docx,.txt">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.65rem;">
+                        <label for="actNameInput">Act Name (Optional)</label>
+                        <input type="text" id="actNameInput" placeholder="e.g. IT Act, 2000">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.85rem;">
+                        <input type="checkbox" id="overwriteCheckbox" style="accent-color: var(--gold);">
+                        <label for="overwriteCheckbox" style="font-size: 0.7rem; user-select: none;">Overwrite existing</label>
+                    </div>
+                    <button class="btn-primary" id="btnUpload" style="width: 100%; justify-content: center; height: 42px;">
+                        <span>📤</span> Upload & Index
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="legal-tooltip" id="legalTooltip">
+        <div class="legal-tooltip-term" id="tooltipTerm">💡 Term</div>
+        <div class="legal-tooltip-def" id="tooltipDef"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
